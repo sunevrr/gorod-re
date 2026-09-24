@@ -284,7 +284,8 @@
     var open = front.hidden;
     // Поворот считает сам скрипт, кадр за кадром: настройки анимации телефона на него не влияют.
     var inner = card.querySelector('.card-in'), t0 = null, swapped = false, HALF = 380, ALL = 830;
-    function frame(now) {
+    function frame() {
+      var now = Date.now();
       if (t0 === null) t0 = now;
       var t = now - t0, a, k;
       if (t < HALF) { k = t / HALF; a = 90 * k * k; }
@@ -298,9 +299,9 @@
       }
       var lift = 1 + .06 * Math.sin(Math.min(1, t / ALL) * Math.PI);
       inner.style.transform = 'rotateY(' + a.toFixed(2) + 'deg) scale(' + lift.toFixed(3) + ')';
-      if (t < ALL) requestAnimationFrame(frame); else { inner.style.transform = ''; busy = false; }
+      if (t < ALL) setTimeout(frame, 16); else { inner.style.transform = ''; busy = false; }
     }
-    requestAnimationFrame(frame);
+    frame();
   });
 
   // Город засыпает: окна гаснут по одному, в конце загорается красное — мафия проснулась.
