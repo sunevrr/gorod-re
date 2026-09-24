@@ -24,7 +24,7 @@
   .hero .caps { color: var(--cream-dim); }
   .hero h1 { font-weight: 600; font-style: italic; font-size: clamp(34px, 7vw, 60px); line-height: 1.08;
     margin: 18px 0 14px; text-wrap: balance; }
-  .hero h1 .who { display: block; font-style: normal; font-weight: 700; }
+  .hero h1 .who { display: block; font-style: normal; font-weight: 700; white-space: nowrap; font-size: min(1em, 8.2vw); }
   .hero p { margin: 0 auto; max-width: 30ch; color: var(--cream-dim); font-style: italic; font-size: 21px; }
   .cue { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); color: var(--cream-dim);
     text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 6px; }
@@ -70,12 +70,14 @@
   .role { text-align: center; background: linear-gradient(var(--ink), var(--night) 30%, var(--night) 70%, var(--ink)); }
   .role h2 { font-family: var(--caps); font-weight: 600; letter-spacing: .3em; font-size: 15px; color: var(--cream-dim);
     margin: 0 0 26px; }
-  .card { width: 250px; height: 356px; margin: 0 auto; background: none; border: 0; padding: 0; -webkit-tap-highlight-color: transparent;
+  .card { width: 250px; height: 356px; margin: 0 auto; perspective: 1100px; background: none; border: 0; padding: 0; -webkit-tap-highlight-color: transparent;
     cursor: pointer; display: block; color: inherit; font: inherit; }
   .card:focus-visible { outline: 2px solid var(--lamp); outline-offset: 8px; border-radius: 16px; }
-  /* Переворот без 3D: карта сжимается в ребро, меняется сторона, раскрывается — работает в любом браузере */
-  .card-in { position: relative; width: 100%; height: 100%; transition: transform .26s ease-in; }
-  .card.turn .card-in { transform: scaleX(0); }
+  /* Переворот: карта поворачивается до ребра, сторона меняется, доворачивается. Без backface-visibility — работает везде */
+  .card-in { position: relative; width: 100%; height: 100%; transition: transform .38s cubic-bezier(.5,0,.9,.5); }
+  .card.turn .card-in { transform: rotateY(90deg) scale(1.06); }
+  .card.land .card-in { transform: rotateY(-90deg) scale(1.06); transition: none; }
+  .card.out .card-in { transition: transform .45s cubic-bezier(.1,.5,.3,1); }
   .face { position: absolute; inset: 0; border-radius: 14px; box-shadow: 0 18px 40px rgba(0,0,0,.55); overflow: hidden; }
   .back { background: var(--red-ink); border: 7px solid var(--cream); }
   .back::before { content: ''; position: absolute; inset: 8px; border: 1.5px solid rgba(237,230,214,.6); border-radius: 6px;
@@ -105,7 +107,7 @@
     font-size: 15px; }
   .letter .rule { width: 120px; height: 2px; background: var(--red-ink); margin: 12px auto 24px; }
   .letter .hello { font-style: italic; font-weight: 600; font-size: clamp(24px, 5vw, 30px); margin: 0 0 16px; text-wrap: balance; }
-  .letter .hello b { font-style: normal; font-weight: 700; }
+  .letter .hello b { font-style: normal; font-weight: 700; white-space: nowrap; }
   .letter p { margin: 0 auto 14px; max-width: 46ch; font-weight: 500; }
   .when { font-family: var(--caps); margin: 26px 0 6px; line-height: 1.15; }
   .when .d { font-weight: 700; font-size: clamp(28px, 6vw, 38px); }
@@ -290,11 +292,13 @@
     card.classList.add('turn');
     setTimeout(function () {
       front.hidden = !open; back.hidden = open;
-      card.classList.remove('turn');
+      card.classList.add('land'); card.classList.remove('turn');
+      void card.offsetWidth;  // зафиксировать ребро, потом доворот
+      card.classList.remove('land'); card.classList.add('out');
       card.setAttribute('aria-pressed', open);
       hint.textContent = open ? 'Добро пожаловать в город РЭ.' : 'Нажмите на карту, чтобы узнать роль';
-      busy = false;
-    }, 270);
+      setTimeout(function () { card.classList.remove('out'); busy = false; }, 460);
+    }, 390);
   });
 
   // Город засыпает: окна гаснут по одному, в конце загорается красное — мафия проснулась.
