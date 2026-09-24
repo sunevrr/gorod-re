@@ -128,10 +128,6 @@
     .caps { letter-spacing: .22em; }
     .poster .caps { font-size: 10.5px; letter-spacing: .16em; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .st, .b1, .b2, .cue svg, .rw.on { animation: none; }
-    .card-in, .w, .rw { transition: none; }
-  }
 </style>
 
 <header class="hero">
@@ -302,12 +298,10 @@
   });
 
   // Город засыпает: окна гаснут по одному, в конце загорается красное — мафия проснулась.
-  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var wins = Array.prototype.slice.call(document.querySelectorAll('.hero-art .w'));
   var red = document.querySelector('.hero-art .rw');
   for (var i = wins.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = wins[i]; wins[i] = wins[j]; wins[j] = t; }
   var keep = Math.round(wins.length * .12), n = 0;
-  if (still) { wins.slice(keep).forEach(function (w) { w.classList.add('off'); }); if (red) red.classList.add('on'); return; }
   setTimeout(function tick() {
     if (n < wins.length - keep) {
       for (var k = 0; k < 6 && n < wins.length - keep; k++) wins[n++].classList.add('off');
