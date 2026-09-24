@@ -74,10 +74,7 @@
     cursor: pointer; display: block; color: inherit; font: inherit; }
   .card:focus-visible { outline: 2px solid var(--lamp); outline-offset: 8px; border-radius: 16px; }
   /* Переворот: карта поворачивается до ребра, сторона меняется, доворачивается. Без backface-visibility — работает везде */
-  .card-in { position: relative; width: 100%; height: 100%; transition: transform .38s cubic-bezier(.5,0,.9,.5); }
-  .card.turn .card-in { transform: rotateY(90deg) scale(1.06); }
-  .card.land .card-in { transform: rotateY(-90deg) scale(1.06); transition: none; }
-  .card.out .card-in { transition: transform .45s cubic-bezier(.1,.5,.3,1); }
+  .card-in { position: relative; width: 100%; height: 100%; will-change: transform; }
   .face { position: absolute; inset: 0; border-radius: 14px; box-shadow: 0 18px 40px rgba(0,0,0,.55); overflow: hidden; }
   .back { background: var(--red-ink); border: 7px solid var(--cream); }
   .back::before { content: ''; position: absolute; inset: 8px; border: 1.5px solid rgba(237,230,214,.6); border-radius: 6px;
@@ -285,16 +282,25 @@
     if (busy) return;
     busy = true;
     var open = front.hidden;
-    card.classList.add('turn');
-    setTimeout(function () {
-      front.hidden = !open; back.hidden = open;
-      card.classList.add('land'); card.classList.remove('turn');
-      void card.offsetWidth;  // зафиксировать ребро, потом доворот
-      card.classList.remove('land'); card.classList.add('out');
-      card.setAttribute('aria-pressed', open);
-      hint.textContent = open ? 'Добро пожаловать в город РЭ.' : 'Нажмите на карту, чтобы узнать роль';
-      setTimeout(function () { card.classList.remove('out'); busy = false; }, 460);
-    }, 390);
+    // Поворот считает сам скрипт, кадр за кадром: настройки анимации телефона на него не влияют.
+    var inner = card.querySelector('.card-in'), t0 = null, swapped = false, HALF = 380, ALL = 830;
+    function frame(now) {
+      if (t0 === null) t0 = now;
+      var t = now - t0, a, k;
+      if (t < HALF) { k = t / HALF; a = 90 * k * k; }
+      else {
+        if (!swapped) {
+          swapped = true; front.hidden = !open; back.hidden = open;
+          card.setAttribute('aria-pressed', open);
+          hint.textContent = open ? 'Добро пожаловать в город РЭ.' : 'Нажмите на карту, чтобы узнать роль';
+        }
+        k = Math.min(1, (t - HALF) / (ALL - HALF)); a = -90 * (1 - k) * (1 - k);
+      }
+      var lift = 1 + .06 * Math.sin(Math.min(1, t / ALL) * Math.PI);
+      inner.style.transform = 'rotateY(' + a.toFixed(2) + 'deg) scale(' + lift.toFixed(3) + ')';
+      if (t < ALL) requestAnimationFrame(frame); else { inner.style.transform = ''; busy = false; }
+    }
+    requestAnimationFrame(frame);
   });
 
   // Город засыпает: окна гаснут по одному, в конце загорается красное — мафия проснулась.
